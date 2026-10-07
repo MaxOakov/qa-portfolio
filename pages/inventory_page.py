@@ -1,4 +1,5 @@
 import allure
+from playwright.sync_api import expect
 
 from pages.base_page import BasePage
 
@@ -26,6 +27,14 @@ class InventoryPage(BasePage):
     def sort_dropdown(self):
         return self.by_test_id("product-sort-container")
 
+    @property
+    def menu_button(self):
+        return self.page.locator("#react-burger-menu-btn")
+
+    @property
+    def logout_link(self):
+        return self.by_test_id("logout-sidebar-link")
+
     @staticmethod
     def _slug(product_name: str) -> str:
         return product_name.lower().replace(" ", "-")
@@ -52,3 +61,12 @@ class InventoryPage(BasePage):
     @allure.step("Open cart")
     def open_cart(self):
         self.page.locator(".shopping_cart_link").click()
+
+    @allure.step("Log out")
+    def logout(self):
+        self.menu_button.press("Enter")
+        # Mouse clicks on the burger button were unreliable in automation
+        # (page jumped while scrolling, menu did not open). Keyboard activation
+        # is a real user interaction and does not depend on coordinates.
+        expect(self.logout_link).to_be_visible()
+        self.logout_link.click()
