@@ -7,9 +7,21 @@ on:
   schedule:
     - cron: "0 6 * * 1"   # every Monday, catches changes on the demo sites
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,17 +37,19 @@ jobs:
       - name: Run tests
         run: pytest -n 4 --browser chromium
 
-      - name: Build Allure report
+      - name: Generate Allure report
         if: always()
-        uses: simple-elf/allure-report-action@v1.9
-        with:
-          allure_results: allure-results
-          allure_history: allure-history
+        run: |
+          npm install -g allure-commandline
+          allure generate allure-results -o allure-report --clean
 
-      - name: Publish report to GitHub Pages
+      - name: Upload report for Pages
         if: always() && github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v4
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: allure-history
+          path: allure-report
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        if: always() && github.ref == 'refs/heads/main'
+        uses: actions/deploy-pages@v4
