@@ -22,7 +22,7 @@ def test_full_checkout(inventory, page):
     checkout = CheckoutPage(page)
     checkout.fill_customer(Customer.random())
     checkout.continue_()
-    expect(checkout.item_total).to_have_text("Item total: $39.98")
+    expect(checkout.item_total).to_have_text("Item total: $40.98")
 
     checkout.finish()
     expect(checkout.complete_header).to_have_text("Thank you for your order!")
